@@ -62,7 +62,11 @@ size_t tensor_len(const tensor t)
 tensor tensor_copy(tensor t)
 {
     // TODO 0.0: copy the tensor and return the copy
-    tensor c = tensor_make(0, 0);
+    tensor c = tensor_make(t.n, t.size);
+    //c.data = calloc(tensor_len(t), sizeof(float));
+    for (size_t i=0; i<tensor_len(t); i++) {
+        c.data[i] = t.data[i];
+    }
     return c;
 }
 
@@ -70,8 +74,11 @@ tensor tensor_copy(tensor t)
 // float s: scalar factor
 // tensor t: tensor to scale in place
 void tensor_scale_(float s, tensor t)
-{
-    // TODO 0.1: scale the tensor in place
+{   
+    for (size_t i=0; i<tensor_len(t); i++) {
+        t.data[i] *= s;
+    }
+
 }
 
 // Scaling of tensor
@@ -90,9 +97,13 @@ tensor tensor_scale(float s, tensor t)
 // tensor x: tensor to be scaled
 // tensor y: tensor to be added into
 void tensor_axpy_(float a, tensor x, tensor y)
-{
+{   
+
     assert(tensor_len(x) == tensor_len(y));
-    // TODO 0.2: perform the elementwise, in-place computation
+    size_t len = tensor_len(x);
+    for(size_t i = 0; i < len; ++i){
+        y.data[i] = a*x.data[i] + y.data[i];
+    }
 }
 
 // Returns a new dimensionality view of a tensor
@@ -430,7 +441,6 @@ tensor tensor_load(char *fname)
     tensor t = tensor_make((size_t) n, size);
     tensor_read(t, fp);
     fclose(fp);
-    free(size);
     return t;
 }
 
@@ -449,7 +459,6 @@ tensor matrix_load(char *fname)
     tensor t = tensor_make((size_t) n, size);
     tensor_read(t, fp);
     fclose(fp);
-    free(size);
     return t;
 }
 

@@ -27,16 +27,41 @@ tensor forward_activation_layer(layer *l, tensor x)
 
     assert(x.n >= 2);
 
-    /* You might want this
+    // You might want this
     size_t i, j;
+    size_t num_col = x.size[1];
     for(i = 0; i < x.size[0]; ++i){
         tensor x_i = tensor_get_(x, i);
         tensor y_i = tensor_get_(y, i);
         size_t len = tensor_len(x_i);
         // Do stuff in here
+        if (a==SOFTMAX) {
+            float sum = 0;
+            for(j=0; j<len; ++j) {
+                sum += exp(x_i.data[j]);
+            }
+            for (j=0; j<len; ++j) {
+                y.data[num_col*i+j] = exp(x_i.data[j]) / sum;
+            }
+        }
+        else {
+            for(j=0; j < len; ++j) {
+                if (a==LOGISTIC) {
+                    y.data[num_col*i+j] = 1/(1+exp(-x_i.data[j]));
+                }
+                if (a==RELU) {
+                    if (y_i.data[j] <= 0) {
+                        y.data[num_col*i+j] = 0;
+                    }
+                }
+                if (a==LRELU){
+                    if (x_i.data[j] <= 0) {
+                        y.data[num_col*i+j] = 0.01 * x_i.data[j];
+                    }
+                }
+            }
+        }
     }
-    */
-
     return y;
 }
 
@@ -60,16 +85,30 @@ tensor backward_activation_layer(layer *l, tensor dy)
     // d/dx lrelu(x)    = 1 if x > 0 else 0.01
     // d/dx softmax(x)  = 1
 
-    /* Might want this too
+    // Might want this too
     size_t i, j;
+    size_t num_col = dx.size[1];
     for(i = 0; i < dx.size[0]; ++i){
         tensor x_i = tensor_get_(x, i);
         tensor dx_i = tensor_get_(dx, i);
         size_t len = tensor_len(dx_i);
         // Do stuff in here
+        for(j=0; j < len; ++j) {
+            if (a==LOGISTIC) {
+                dx.data[num_col*i+j] *= (1/(1+exp(-x_i.data[j]))) * (1-(1/(1+exp(-x_i.data[j]))));
+            }
+            if (a==RELU) {
+                if (x_i.data[j] <= 0) {
+                    dx.data[num_col*i+j] = 0;
+                }
+            }
+            if (a==LRELU){
+                if (x_i.data[j] <= 0) {
+                    dx.data[num_col*i+j] *= 0.01;
+                }
+            }
+        }
     }
-    */
-
     return dx;
 }
 

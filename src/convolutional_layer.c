@@ -220,6 +220,13 @@ tensor backward_convolutional_layer(layer *l, tensor dy)
 void update_convolutional_layer(layer *l, float rate, float momentum, float decay)
 {
     // TODO: 5.3
+    tensor_axpy_(decay, l->w, l->dw);
+    tensor_axpy_(-rate, l->dw, l->w);
+    tensor_scale_(momentum, l->dw);
+
+    // Do the same for biases as well but no need to use weight decay on biases
+    tensor_axpy_(-rate, l->db, l->b);
+    tensor_scale_(momentum, l->db);
 
 }
 
