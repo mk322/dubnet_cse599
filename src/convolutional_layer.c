@@ -31,9 +31,29 @@ tensor im2col(tensor im, size_t size_y, size_t size_x, size_t stride, size_t pad
 
     // TODO: 5.1
     // Fill in the column matrix with patches from the image
-
+    int channels = im_c * size_x * size_y;
+    for (i = 0; i < channels; ++i) {
+        int w_offset = i % size_x;
+        int h_offset = (i / size_x) % size_y;
+        int im_chan = i / size_x / size_y;
+        for (j = 0; j < res_h; ++j) {
+            for (k = 0; k < res_w; ++k) {
+                int im_row = h_offset + j * stride - pad;
+                int im_col = w_offset + k * stride - pad;
+                int index = (i * res_h + j) * res_w + k;
+                if (im_row < 0 || im_col < 0 || im_row >= im_h || im_col >= im_w) {
+                    col.data[index] = 0;
+                } else {
+                    col.data[index] = im.data[im_col + im_w*(im_row + im_h*im_chan)];
+                }
+            }
+        }
+    }
     return col;
 }
+
+
+
 
 // The reverse of im2col, add elements back into image
 // matrix col: column matrix to put back into image
@@ -60,7 +80,22 @@ tensor col2im(tensor col, size_t c, size_t h, size_t w, size_t size_y, size_t si
 
     // TODO: 5.1
     // Fill in the column matrix with patches from the image
-
+    int channels = im_c * size_x * size_y;
+    for (i = 0; i < channels; ++i) {
+        int w_offset = i % size_x;
+        int h_offset = (i / size_x) % size_y;
+        int im_chan = i / size_x / size_y;
+        for (j = 0; j < res_h; ++j) {
+            for (k = 0; k < res_w; ++k) {
+                int im_row = h_offset + j * stride - pad;
+                int im_col = w_offset + k * stride - pad;
+                int index = (i * res_h + j) * res_w + k;
+                if ((im_row >= 0) && (im_col >= 0) && (im_row < im_h) && (im_col < im_w)) {
+                    im.data[im_col + im_w*(im_row + im_h*im_chan)] += col.data[index];
+                }
+            }
+        }
+    }
     return im;
 }
 
