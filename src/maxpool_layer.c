@@ -28,6 +28,33 @@ tensor forward_maxpool_layer(layer *l, tensor x)
     int pad = -((int) l->size - 1)/2;
 
     // TODO: 6.1 - iterate over the input and fill in the output with max values
+    int out_c = x.size[1];
+    int out_h = (x.size[2]-1)/l->stride + 1;
+    int out_w = (x.size[3]-1)/l->stride + 1;
+    int n, c, h, w, i, j;
+    for (n = 0; n < x.size[0]; ++n) {
+        for (c = 0; c < out_c; ++c) {
+            for (h = 0; h < out_h; ++h) {
+                for (w = 0; w < out_w; ++w) {
+                    int index_1d = w + out_w * (h + out_h *(c + out_c*n));
+                    float max_value = -FLT_MAX;
+                    for (i = 0; i < (int) l->size; ++i) {
+                        for (j = 0; j < (int) l->size; ++j) {
+                            int layer_h = pad + h*l->stride + i;
+                            int layer_w = pad + w*l->stride + j;
+                            int index = layer_w + x.size[3]*(layer_h + x.size[2]*(c + n*x.size[1]));
+                            float val = x.data[index];
+                            if (layer_h < 0 || layer_h >= x.size[2] || layer_w < 0 || layer_w >= x.size[3]) {
+                                val = -FLT_MAX;
+                            }
+                            max_value = (val > max_value) ? val   : max_value;
+                        }
+                    }
+                    y.data[index_1d] = max_value;
+                }
+            }
+        }
+    }
 
     return y;
 }
@@ -44,7 +71,37 @@ tensor backward_maxpool_layer(layer *l, tensor dy)
     // TODO: 6.2 - find the max values in the input again and fill in the
     // corresponding delta with the delta from the output. This should be
     // similar to the forward method in structure.
-
+    int out_c = x.size[1];
+    int out_h = (x.size[2]-1)/l->stride + 1;
+    int out_w = (x.size[3]-1)/l->stride + 1;
+    int n, c, h, w, i, j;
+    for (n = 0; n < x.size[0]; ++n) {
+        for (c = 0; c < out_c; ++c) {
+            for (h = 0; h < out_h; ++h) {
+                for (w = 0; w < out_w; ++w) {
+                    int index_1d = w + out_w * (h + out_h *(c + out_c*n));
+                    float max_value = -FLT_MAX;
+                    int max_index = -1;
+                    for (i = 0; i < (int) l->size; ++i) {
+                        for (j = 0; j < (int) l->size; ++j) {
+                            int layer_h = pad + h*l->stride + i;
+                            int layer_w = pad + w*l->stride + j;
+                            int index = layer_w + x.size[3]*(layer_h + x.size[2]*(c + n*x.size[1]));
+                            float val = x.data[index];
+                            if (layer_h < 0 || layer_h >= x.size[2] || layer_w < 0 || layer_w >= x.size[3]) {
+                                val = -FLT_MAX;
+                            }
+                            if (val > max_value) {
+                                max_value = val;
+                                max_index = index;
+                            }
+                        }
+                    }
+                    dx.data[max_index] += dy.data[index_1d];
+                }
+            }
+        }
+    }
     return dx;
 }
 
