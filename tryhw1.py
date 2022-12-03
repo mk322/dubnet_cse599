@@ -1,5 +1,23 @@
 from dubnet import *
 
+def fc_net():
+    l = [   make_connected_layer(3072, 72),
+            make_activation_layer(RELU),
+
+            make_connected_layer(72, 512),
+            make_activation_layer(RELU),
+
+            make_connected_layer(512, 1104),
+            make_activation_layer(RELU),
+
+            make_connected_layer(1104, 256),
+            make_activation_layer(RELU),
+
+            make_connected_layer(256, 10),
+            make_activation_layer(SOFTMAX)]
+    return make_net(l)
+
+
 def conv_net():
     l = [   make_convolutional_layer(3, 8, 3, 1),
             make_activation_layer(RELU),
@@ -30,7 +48,12 @@ rate = .01
 momentum = .9
 decay = .005
 
-m = conv_net()
+m = fc_net()
+conv = True
+
+if conv: 
+    m = conv_net()
+
 print("training...")
 train_image_classifier(m, train, batch, iters, rate, momentum, decay)
 print("done")
@@ -44,4 +67,10 @@ print("test accuracy:     %f", accuracy_net(m, test))
 # Why are you seeing these results? Speculate based on the information you've gathered and what you know about DL and ML.
 # Your answer:
 #
-
+# ConvNet: training accuracy = 53.45% ; test accuracy = 52.84%
+# Fully connected network: training accurracy = 42.25%; test accuracy= 41.65%
+#
+# The fully connected network tries to find a relationship or features by using all pixels and channels of an image.
+# In fact, for the image classification task, only the neighboring pixels give the most useful information about a 
+# particular pixel and convolutions are best suited for this. The ConvNet uses the same number of operations more efficiently
+# by using convolutions. Thus, the accuracy of ConvNet is higher than the accuracy of the fully connected network.
